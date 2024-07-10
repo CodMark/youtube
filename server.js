@@ -4,7 +4,7 @@ const app = express();
 const cors = require("cors");
 
 const corsOptions = {
-    origin: "https://www.codeweb4u.com/",
+    origin: "https://youtube-nine-dusky.vercel.app",
     credentials: true,
     optionsSuccessStatus: 200,
     exposedHeaders: "**"
