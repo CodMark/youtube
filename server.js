@@ -1,5 +1,6 @@
 const express = require('express');
 const ytdl = require('ytdl-core');
+const axios = require('axios');
 const app = express();
 const cors = require("cors");
 
@@ -16,62 +17,28 @@ app.get('/download', async (req, res, next) => {
     console.log(req.query.url);
     try {
         const videoUrl = req.query.url;
-        if (!videoUrl || !ytdl.validateURL(videoUrl)) {
-            return res.status(400).send({ error: 'Invalid URL' });
-        }
-
-        const videoInfo = await ytdl.getInfo(videoUrl);
-
-        // Get video details
-        const title = videoInfo.videoDetails.title;
-        const thumbnailUrl = videoInfo.videoDetails.thumbnails[4].url;
-
-        // Function to find format URL
-        const getFormatUrl = (itag) => {
-            const format = videoInfo.formats.find(f => f.itag === itag);
-            return format ? format.url : null;
+        const url = 'https://10downloader.com/download';
+        const headers = {
+            'Accept': '*/*',
+            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+            'Origin': 'https://10downloader.com',
+            'Referer': 'https://10downloader.com',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+            'X-Requested-With': 'XMLHttpRequest'
         };
 
-        // itags for common resolutions
-        const itags = {
-            '1080p': 137, // video-only
-            '720p': 136, // video-only
-            '480p': 135, // video-only
-            '360p': 18   // video and audio
-        };
+        // URL-encoded data string
+        const data = 'url=https%3A%2F%2Fyoutu.be%2FnkGONChkBAA%3Fsi%3DLNCyBlyO3gc0k5My&q_auto=0&ajax=1&token=64708fd20b972214191a41709ec2043a417acb528c9b6e181005fa6b8edd729e';
 
-        const videoUrls = {
-            '1080p': getFormatUrl(itags['1080p']),
-            '720p': getFormatUrl(itags['720p']),
-            '480p': getFormatUrl(itags['480p']),
-            '360p': getFormatUrl(itags['360p'])
-        };
+        axios.post(url, data, { headers })
+            .then(response => {
+                res.send(response.data);
+            })
+            .catch(error => {
+                console.error(error);
+                res.send(error);
+            });
 
-        // Find the highest quality video format
-        let highestQualityUrl = null;
-        let highestQuality = 0;
-        videoInfo.formats.forEach(format => {
-            if (format.qualityLabel && format.hasVideo && format.hasAudio) {
-                const quality = parseInt(format.qualityLabel.replace('p', ''), 10);
-                if (quality > highestQuality) {
-                    highestQuality = quality;
-                    highestQualityUrl = format.url;
-                }
-            }
-        });
-
-        // Audio format (common itag for audio)
-        const audioUrl = getFormatUrl(140); // itag for m4a audio
-
-        const response = {
-            title: title,
-            thumbnailUrl: thumbnailUrl,
-            videoUrls: videoUrls,
-            highestQualityUrl: highestQualityUrl,
-            audioUrl: audioUrl
-        };
-
-        res.send(response);
     } catch (error) {
         console.error(error);
         res.status(500).send({ error: 'Failed to retrieve video info' });
